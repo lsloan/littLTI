@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="robots" content="noindex">
+  <title>A basic LTI Consumer to launch LTI providers</title>
+  
+  <script type="text/javascript" src="jquery-2.1.3.js"></script>
+  <script type="text/javascript" src="hmac-sha1.js"></script>
+  <script type="text/javascript" src="enc-base64.js"></script>
+  
+  <style type="text/css">
+    input:read-only {
+    background-color: #D6D6D6;
+    }
+    input[type=text] {
+    width: 20em;
+    }
+    .notabene {
+    font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript">//<![CDATA[
+
+(function () {
+    window.onload = function () {
+        $('#launchUrl').val('LTI-SERVER-URL');
+        $('#key').val('LTI-KEY');
+        $('#secret').val('LTI-SECRET');
+
+        $('input[name="custom_canvas_user_login_id"]').val("");
+        $('input[name="custom_canvas_course_id"]').val("");
+        updateLtiLaunchForm();
+    };
+
+    this.updateLtiLaunchForm = function () {
+        var launchUrl = $('#launchUrl').val();
+        var encodedSecret = encodeURIComponent($('#secret').val()) + '&';
+        var $ltiLaunchForm = $('#ltiLaunchForm');
+
+        $ltiLaunchForm.attr('action', launchUrl);
+        $('#oauth_consumer_key').val($('#key').val());
+        $('#oauth_timestamp').val(Math.floor(new Date().getTime() / 1000));
+        $('#oauth_nonce').val(uniqid('', true));
+
+        var fields = [];
+        $('input[type="text"]', $ltiLaunchForm).not('[name="oauth_signature"]').each(function () {
+            var input = $(this);
+            fields.push(input.attr('name') + '=' + rawurlencode(input.val()));
+        });
+
+        var message = 'POST&' + encodeURIComponent(launchUrl) + '&' + rawurlencode(fields.sort().join('&'));
+
+        var oauthSignature = CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA1(message, encodedSecret));
+        $('#oauth_signature').val(oauthSignature);
+    };
+
+    this.rawurlencode = function (str) {
+        str = (str + '').toString();
+        return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').
+        replace(/\)/g, '%29').replace(/\*/g, '%2A');
+    };
+
+    this.uniqid = function (prefix, moreEntropy) {
+        prefix = prefix || '';
+        moreEntropy = moreEntropy || false;
+        var result;
+
+        this.formatSeed = function (seed, width) {
+            seed = parseInt(seed, 10).toString(16);
+            return width < seed.length ? seed.slice(seed.length - width) : ((width > seed.length) ? new Array(1 + (width - seed.length)).join('0') + seed : seed);
+        };
+
+        result = prefix + this.formatSeed(parseInt(new Date().getTime() / 1000, 10), 8) + this.formatSeed(Math.floor(Math.random() * 0x75bcd15) + 1, 5);
+
+        if (moreEntropy) result += (Math.random() * 10).toFixed(8).toString();
+
+        return result;
+    };
+})();
+//]]> 
+
+  </script>
+  
+  </head>
+  <body>
+    <h1>LTI tool provider configuration</h1> 
+    <form id="ltiConfigurationForm" onsubmit="updateLtiLaunchForm(); return false;">
+      <ul>
+        <li>
+          <label>Launch URL:
+            <input id="launchUrl" value="" type="text">
+          </label>
+        </li>
+        <li>
+          <label>Key:
+            <input id="key" value="" type="text">
+          </label>
+        </li>
+        <li>
+          <label>Secret:
+            <input id="secret" value="" type="text">
+          </label>
+        </li>
+      </ul>
+      <button type="submit" style="display: none;"></button>
+    </form>
+    <h2>LTI launch parameters</h2> 
+    <form id="ltiLaunchForm" name="ltiLaunchForm" method="POST" onsubmit="updateLtiLaunchForm()" target="_blank">
+      <ul>
+        <li>
+          <label>user_id:
+            <input type="text" name="user_id" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>roles:
+            <input type="text" name="roles" value="Instructor">
+          </label>
+        </li>
+        <li>
+          <label>resource_link_id:
+            <input type="text" name="resource_link_id" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>resource_link_title:
+            <input type="text" name="resource_link_title" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>resource_link_description:
+            <input type="text" name="resource_link_description" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>lis_person_name_full:
+            <input type="text" name="lis_person_name_full" value="Jane Q. Public">
+          </label>
+        </li>
+        <li>
+          <label>lis_person_name_family:
+            <input type="text" name="lis_person_name_family" value="Public">
+          </label>
+        </li>
+        <li>
+          <label>lis_person_name_given:
+            <input type="text" name="lis_person_name_given" value="Jane">
+          </label>
+        </li>
+        <li>
+          <label>lis_person_contact_email_primary:
+            <input type="text" name="lis_person_contact_email_primary" value="user@school.edu">
+          </label>
+        </li>
+        <li>
+          <label>lis_person_sourcedid:
+            <input type="text" name="lis_person_sourcedid" value="school.edu:user">
+          </label>
+        </li>
+        <li>
+          <label>context_id:
+            <input type="text" name="context_id" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>context_title:
+            <input type="text" name="context_title" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>context_label:
+            <input type="text" name="context_label" value="TBD">
+          </label>
+        </li>
+        <li>
+          <label>tool_consumer_instance_guid:
+            <input type="text" name="tool_consumer_instance_guid" value="lmsng.school.edu">
+          </label>
+        </li>
+        <li>
+          <label>tool_consumer_instance_description:
+            <input type="text" name="tool_consumer_instance_description" value="University of School (LMSng)">
+          </label>
+        </li>
+        <li>
+          <label>lti_version:
+            <input type="text" name="lti_version" value="LTI-1p0">
+          </label>
+        </li>
+        <li>
+          <label>lti_message_type:
+            <input type="text" name="lti_message_type" value="basic-lti-launch-request">
+          </label>
+        </li>
+        <li>
+          <label>custom_caliper_api_key:
+            <input type="text" name="custom_caliper_api_key" value="custom_caliper_api_key">
+          </label>
+        </li>
+        <li>
+          <label>custom_caliper_service_url:
+            <input type="text" name="custom_caliper_service_url" value="custom_caliper_service_url">
+          </label><span class="notabene">(Hint:&nbsp;<a href="http://requestb.in/">RequestBin</a>)</span>
+          
+        </li>
+        <li>
+          <label>custom_caliper_session_id:
+            <input type="text" name="custom_caliper_session_id" value="custom_caliper_session_id">
+          </label>
+        </li>
+        <li>
+          <label>custom_canvas_course_id:
+            <input type="text" name="custom_canvas_course_id" value="custom_canvas_course_id">
+          </label>
+        </li>
+        <li>
+          <label>custom_canvas_enrollment_state:
+            <input type="text" name="custom_canvas_enrollment_state" value="custom_canvas_enrollment_state">
+          </label>
+        </li>
+        <li>
+          <label>custom_canvas_user_login_id:
+            <input type="text" name="custom_canvas_user_login_id" value="custom_canvas_user_login_id">
+          </label>
+        </li>        
+        <li>
+          <label>oauth_callback:
+            <input type="text" name="oauth_callback" value="about:blank">
+          </label>
+        </li>
+        <li>
+          <label>oauth_consumer_key:
+            <input type="text" name="oauth_consumer_key" id="oauth_consumer_key" readonly="" value="">
+          </label><span class="notabene">(Copied from TP key.)</span>
+        </li>
+        <li>
+          <label>oauth_version:
+            <input type="text" name="oauth_version" value="1.0">
+          </label>
+        </li>
+        <li>
+          <label>oauth_nonce:
+            <input type="text" name="oauth_nonce" id="oauth_nonce" value="">
+          </label>
+        </li>
+        <li>
+          <label>oauth_timestamp:
+            <input type="text" name="oauth_timestamp" id="oauth_timestamp" value="">
+          </label>
+        </li>
+        <li>
+          <label>oauth_signature_method:
+            <input type="text" name="oauth_signature_method" value="HMAC-SHA1">
+          </label>
+        </li>
+        <li>oauth_signature:
+          <input type="text" readonly="" name="oauth_signature" id="oauth_signature" value="">
+          <input type="button" value="Refresh" onclick="updateLtiLaunchForm(); return false;">
+        </li>
+      </ul>
+      <p>
+        <button type="submit">Launch</button>↗</p>
+    </form>
+    
+</body></html>
